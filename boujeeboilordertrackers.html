@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boujee Boil — Order Manager</title>
+<style>
+:root{--bg:#f7f3f0;--card:#fff;--ink:#231f20;--muted:#756d69;--accent:#7b315d;--accent2:#b56b8f;--line:#e7ded9;--green:#52745a;--gold:#b08a42}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#231f20;color:white;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.brand h1{margin:0;font-size:25px;letter-spacing:.08em}.brand p{margin:4px 0 0;color:#d9c9d0;font-size:12px}
+nav{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}.navbtn{background:#3a3435;color:white}.navbtn.active,.primary{background:var(--accent);color:#fff}.secondary{background:#eee5e1;color:var(--ink)}
+main{max-width:1400px;margin:25px auto;padding:0 18px}.grid{display:grid;grid-template-columns:1.35fr .8fr;gap:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:0 5px 18px #2b1d2510}
+h2{margin:0 0 16px;font-size:19px}.section{margin-top:20px}.section:first-child{margin-top:0}
+label{display:block;font-size:12px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit}textarea{min-height:75px;resize:vertical}
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.formgrid.three{grid-template-columns:repeat(3,1fr)}
+.menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.menu-item{border:1px solid var(--line);border-radius:11px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:center}.menu-item strong{display:block}.small{font-size:12px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:7px}.qty button{width:31px;height:31px;padding:0;background:#eee5e1}.qty span{min-width:20px;text-align:center;font-weight:800}
+.addon-row{display:grid;grid-template-columns:1fr 90px;gap:10px;margin-bottom:8px}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+.order-line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);gap:10px}.order-line:last-child{border-bottom:0}.remove{background:none;color:#a33;padding:2px 5px}
+.total{border-top:2px solid var(--ink);margin-top:12px;padding-top:12px;font-size:18px}.total div{display:flex;justify-content:space-between;margin:6px 0}.grand{font-size:24px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.actions button{flex:1}
+.badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#f0e1e8;color:var(--accent);font-size:11px;font-weight:800}
+.hidden{display:none}.empty{color:var(--muted);padding:25px;text-align:center}
+.history-card{margin-top:20px}.history-item{display:grid;grid-template-columns:90px 1fr 120px 100px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.receipt{max-width:420px;margin:auto;background:#fff;padding:25px;font-family:Arial,sans-serif}.receipt h1{text-align:center;font-size:20px;letter-spacing:.1em;margin:8px 0 4px}.receipt .center{text-align:center}.receipt hr{border:0;border-top:1px dashed #555;margin:15px 0}.rline{display:flex;justify-content:space-between;gap:15px;margin:7px 0}.receipt .grand{font-size:21px;font-weight:800}
+.receipt-logo{display:block;margin:0 auto 6px;width:70px;height:auto;object-fit:contain}
+.dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px}.stat b{display:block;font-size:23px;margin-top:4px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.dashboard{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.formgrid,.formgrid.three,.menu-grid{grid-template-columns:1fr}.history-item{grid-template-columns:1fr}}
+@media print{body{background:#fff}.no-print,header,main>*:not(#receiptView){display:none!important}#receiptView{display:block!important}.receipt{box-shadow:none;border:0;width:80mm;max-width:80mm;padding:5mm}}
+</style>
+</head>
+<body>
+<header class="no-print">
+  <div class="brand"><h1>BOUJEE BOIL</h1><p>Order Manager • Seafood • Sides • Sauce</p></div>
+  <nav><button class="navbtn active" onclick="showPage('order',this)">New Order</button><button class="navbtn" onclick="showPage('history',this)">Order History</button><button class="navbtn" onclick="showPage('dashboard',this)">Dashboard</button></nav>
+</header>
+
+<main>
+<section id="order">
+<div class="grid">
+<div class="card">
+<h2>Customer & Order</h2>
+<div class="formgrid">
+<div><label>Customer name</label><input id="customer" placeholder="Jane Doe"></div>
+<div><label>Phone</label><input id="phone" placeholder="250-555-5555"></div>
+<div><label>Order type</label><select id="orderType"><option>Pickup</option><option>Delivery</option></select></div>
+<div><label>Date & time</label><input id="dateTime" type="datetime-local"></div>
+</div>
+<div class="section"><label>Delivery address</label><input id="address" placeholder="Street name, unit, city, postal code"></div>
+
+<div class="section"><label>Seafood boils</label><div id="boils" class="menu-grid"></div></div>
+<div class="section"><label>Sauce</label><div id="sauces" class="menu-grid"></div></div>
+<div class="section"><label>Add-ons</label><div id="addons" class="menu-grid"></div></div>
+<div class="section"><label>Sides</label><div id="sides" class="menu-grid"></div></div>
+
+<div class="section">
+<label>Delivery fee / other charge</label>
+<div class="formgrid three"><input id="deliveryFee" type="number" min="0" step=".01" placeholder="0.00"><input id="discount" type="number" min="0" step=".01" placeholder="0.00"><select id="payment"><option>Unpaid</option><option>Cash</option><option>Debit</option><option>E-transfer</option><option>Other</option></select></div>
+</div>
+<div class="section"><label>Special instructions</label><textarea id="notes" placeholder="No potatoes, extra sauce, allergies, delivery notes, etc."></textarea></div>
+<div class="actions"><button class="primary" onclick="saveOrder()">Save Order</button><button class="secondary" onclick="printReceipt()">Print Customer Receipt</button><button class="secondary" onclick="printKitchen()">Print Kitchen Ticket</button><button class="secondary" onclick="resetOrder()">Clear</button></div>
+</div>
+
+<div class="card">
+<h2>Current Order <span id="orderBadge" class="badge">NEW</span></h2>
+<div id="orderSummary" class="empty">Choose items from the menu.</div>
+<div class="total">
+<div><span>Subtotal</span><b id="subtotal">$0.00</b></div>
+<div><span>Delivery / other</span><b id="feeDisplay">$0.00</b></div>
+<div><span>Discount</span><b id="discountDisplay">-$0.00</b></div>
+<div class="grand"><span>Total</span><b id="total">$0.00</b></div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="history" class="hidden">
+<div class="card history-card"><h2>Order History</h2><div class="actions"><button class="secondary" onclick="exportCSV()">Export Accounting CSV</button><button class="secondary" onclick="clearHistory()">Clear Saved Orders</button></div><div id="historyList"></div></div>
+</section>
+
+<section id="dashboard" class="hidden">
+<div class="dashboard">
+<div class="stat"><span class="small">Orders</span><b id="statOrders">0</b></div>
+<div class="stat"><span class="small">Sales</span><b id="statSales">$0.00</b></div>
+<div class="stat"><span class="small">Pickup</span><b id="statPickup">0</b></div>
+<div class="stat"><span class="small">Delivery</span><b id="statDelivery">0</b></div>
+</div>
+<div class="card"><h2>Recent Orders</h2><div id="dashboardList"></div></div>
+</section>
+
+<section id="receiptView" class="hidden"></section>
+</main>
+
+<script>
+const logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSU5BKBuf1A3AAAEJUlEQVR42u2dQW4CMRBD37/0BThA2l6AkC64sXACXIA34A34An6A73AAvXBCiJ+06xJ1pCpLslOqPcmS2NlO4k1mPM7sO2vXdT2v63reSUnX8/E8LcvydD33+/36/X7fD4v9m/U6n8/zchxf23mS1G2O/e19E/l/XmP1v42k4/G43e/3fSml4/G43e/3fSnll9R9O8/fT44/y9o4fL/f38/zcZpM9n/O3/W3+419n9e/yXw8/26N4+8/jD33fL7/eZ/vP2N/m4/zNf4y/4y/1j9/8/38eZ00zn++7m/f98+ff2Ntz73e13v/7ev3+/s3e39+fH9/f+3x3ff99/f/1/X85+s+/98/f597fv14/f199/33/vf77/2v99/f33/vf/39f99f/ff99f1v/vf3+7+v/99/3/85/3/+/f3+/vf//3+/v/f/+/v///9/v///f//3v//3+/v//39/v/f//9/v///n///f99/99/3v//3v///n///v/3//f///3f//f/8//v///vf//ff//9/3//v///9/3/33v/3v//3v//3f//9/3///e/3///3/f//3//3vf//73///v/33vf///f33vf///ff///3f9/f///f3/d//v/f//f33///3vf//ff//vf/9//f//ff/33v//v//d973//vf//f//73/3vf/9/f33v///3/f///f///f9/3f/3vf//f3///39/f//3//d97///v standard_logo_data_placeholder";
+
+const menu={
+boils:[
+{name:"Individual Plate",price:55,desc:"1 crab cluster • 10 shrimp • corn • mini potatoes • sausage"},
+{name:"Feast for Two",price:110,desc:"2 crab clusters • 20 shrimp • 2 corn • mini potatoes • sausage"},
+{name:"Family Pack",price:220,desc:"4 crab clusters • 40 shrimp • 4 corn • mini potatoes • sausage"}],
+sauces:[{name:"Cajun Butter",price:0},{name:"Garlic Butter",price:0},{name:"Spicy Cajun Glaze",price:0}],
+addons:[{name:"Shrimp (12–15 pcs)",price:17},{name:"Crab Legs (2–3 clusters)",price:35},{name:"Lobster Tail",price:26},{name:"King Crab",price:100}],
+sides:[{name:"Seafood Pasta",price:26.50},{name:"Smoked Veggies",price:16},{name:"Basmati Rice",price:10}]
+};
+let cart=[]; let saved=JSON.parse(localStorage.getItem("boujeeBoilOrders")||"[]"); let currentOrderId=null;
+const money=n=>"$"+Number(n||0).toFixed(2);
+function renderMenu(id,type){
+ const el=document.getElementById(id); el.innerHTML="";
+ menu[type].forEach((x,i)=>{
+  const d=document.createElement("div");d.className="menu-item";
+  d.innerHTML=`<div><strong>${x.name}</strong><span class="small">${x.desc||""}</span><div class="small">${x.price?money(x.price):"Included"}</div></div><div class="qty"><button onclick="changeQty('${type}',${i},-1)">−</button><span id="${type}${i}">0</span><button onclick="changeQty('${type}',${i},1)">+</button></div>`;
+  el.appendChild(d);
+ });
+}
+function changeQty(type,i,delta){
+ const item=menu[type][i], key=type+"-"+i;
+ let found=cart.find(x=>x.key===key);
+ if(!found && delta>0){found={key,type,i,name:item.name,price:item.price,qty:1};cart.push(found)}
+ else if(found){found.qty=Math.max(0,found.qty+delta);if(found.qty===0)cart=cart.filter(x=>x!==found)}
+ document.getElementById(type+i).textContent=found?found.qty:0; renderSummary();
+}
+function renderSummary(){
+ const el=document.getElementById("orderSummary"); if(!cart.length){el.className="empty";el.innerHTML="Choose items from the menu.";updateTotals();return}
+ el.className="";el.innerHTML=cart.map(x=>`<div class="order-line"><div><b>${x.qty} × ${x.name}</b><div class="small">${money(x.price)} each</div></div><div>${money(x.price*x.qty)}</div></div>`).join("");
+ updateTotals();
+}
+function updateTotals(){
+ const sub=cart.reduce((a,x)=>a+x.price*x.qty,0),fee=+document.getElementById("deliveryFee").value||0,disc=+document.getElementById("discount").value||0,total=Math.max(0,sub+fee-disc);
+ document.getElementById("subtotal").textContent=money(sub);document.getElementById("feeDisplay").textContent=money(fee);document.getElementById("discountDisplay").textContent="-"+money(disc);document.getElementById("total").textContent=money(total);
+}
+function orderData(){
+ const sub=cart.reduce((a,x)=>a+x.price*x.qty,0),fee=+deliveryFee.value||0,disc=+discount.value||0;
+ return {id:currentOrderId||("BB-"+Date.now().toString().slice(-6)),customer:customer.value,phone:phone.value,address:address.value,orderType:orderType.value,dateTime:dateTime.value,cart:JSON.parse(JSON.stringify(cart)),deliveryFee:fee,discount:disc,payment:payment.value,notes:notes.value,subtotal:sub,total:Math.max(0,sub+fee-disc),status:"New",created:new Date().toISOString()};
+}
+function saveOrder(){
+ if(!cart.length){alert("Add at least one item first.");return}
+ const o=orderData(); currentOrderId=o.id;
+ const idx=saved.findIndex(x=>x.id===o.id); if(idx>=0)saved[idx]=o;else saved.unshift(o);
+ localStorage.setItem("boujeeBoilOrders",JSON.stringify(saved)); document.getElementById("orderBadge").textContent=o.id; renderHistory(); renderDashboard(); alert("Order "+o.id+" saved.");
+}
+function resetOrder(){
+ cart=[];currentOrderId=null;["customer","phone","address","notes"].forEach(id=>document.getElementById(id).value="");deliveryFee.value="";discount.value="";payment.value="Unpaid";setDefaultDate();Object.keys(menu).forEach(t=>menu[t].forEach((_,i)=>document.getElementById(t+i).textContent="0"));document.getElementById("orderBadge").textContent="NEW";renderSummary();
+}
+function setDefaultDate(){dateTime.value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16)}
+function showPage(page,btn){document.querySelectorAll("main>section").forEach(x=>x.classList.add("hidden"));document.getElementById(page).classList.remove("hidden");document.querySelectorAll(".navbtn").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(page==="history")renderHistory();if(page==="dashboard")renderDashboard()}
+function loadOrder(id){const o=saved.find(x=>x.id===id);if(!o)return;resetOrder();currentOrderId=o.id;customer.value=o.customer;phone.value=o.phone;address.value=o.address||"";orderType.value=o.orderType;dateTime.value=o.dateTime;deliveryFee.value=o.deliveryFee;discount.value=o.discount;payment.value=o.payment;notes.value=o.notes;cart=o.cart;cart.forEach(x=>{document.getElementById(x.type+x.i).textContent=x.qty});document.getElementById("orderBadge").textContent=o.id;renderSummary();showPage("order",document.querySelector(".navbtn"))}
+function renderHistory(){const el=document.getElementById("historyList");if(!saved.length){el.innerHTML='<div class="empty">No saved orders yet.</div>';return}el.innerHTML=saved.map(o=>`<div class="history-item"><b>${o.id}</b><div><strong>${o.customer||"Walk-in"}</strong><div class="small">${new Date(o.dateTime||o.created).toLocaleString()} • ${o.orderType}</div></div><strong>${money(o.total)}</strong><div><button class="secondary" onclick="loadOrder('${o.id}')">Open</button></div></div>`).join("")}
+function renderDashboard(){const today=new Date().toISOString().slice(0,10),orders=saved.filter(o=>(o.dateTime||o.created).slice(0,10)===today);statOrders.textContent=orders.length;statSales.textContent=money(orders.reduce((a,o)=>a+o.total,0));statPickup.textContent=orders.filter(o=>o.orderType==="Pickup").length;statDelivery.textContent=orders.filter(o=>o.orderType==="Delivery").length;dashboardList.innerHTML=orders.length?orders.map(o=>`<div class="order-line"><span><b>${o.id}</b> — ${o.customer||"Walk-in"}</span><b>${money(o.total)}</b></div>`).join(""):'<div class="empty">No orders today.</div>'}
+function receiptHTML(o,kitchen=false){
+ const items=o.cart.map(x=>`<div class="rline"><span>${x.qty} × ${x.name}</span><span>${money(x.qty*x.price)}</span></div>`).join("");
+ if(kitchen)return `<div class="receipt"><h1>BOUJEE BOIL</h1><div class="center"><b>KITCHEN TICKET</b><br>${o.id}<br>${o.customer||"Walk-in"}<br>${o.phone||""}<br><b>DELIVERY ADDRESS:</b><br>${o.address||"N/A"}<br><br>${o.orderType} • ${o.dateTime?new Date(o.dateTime).toLocaleString():""}</div><hr>${o.cart.map(x=>`<div style="margin:10px 0"><b>${x.qty} × ${x.name}</b></div>`).join("")}<hr><b>PAYMENT: ${o.payment}</b><br><br><b>NOTES</b><div style="white-space:pre-wrap">${o.notes||"None"}</div></div>`;
+ return `<div class="receipt"><img class="receipt-logo" src="` + logoBase64 + `" alt="Logo"><h1>BOUJEE BOIL</h1><div class="center">Get into it… buttery, seasoned, messy in the best way<br><br><b>ORDER ${o.id}</b><br>${o.customer||"Walk-in"}<br>${o.orderType} • ${o.dateTime?new Date(o.dateTime).toLocaleString():""}</div><hr>${items}<hr><div class="rline"><span>Subtotal</span><span>${money(o.subtotal)}</span></div><div class="rline"><span>Delivery / other</span><span>${money(o.deliveryFee)}</span></div><div class="rline"><span>Discount</span><span>-${money(o.discount)}</span></div><div class="rline grand"><span>TOTAL</span><span>${money(o.total)}</span></div><div class="center"><br>Payment: ${o.payment}<br><br>Thank you for ordering Boujee Boil!<br>❤️</div></div>`;
+}
+function printGeneric(kitchen=false){let o=orderData();if(!cart.length){alert("Add at least one item first.");return}document.getElementById("receiptView").innerHTML=receiptHTML(o,kitchen);document.getElementById("receiptView").classList.remove("hidden");window.print();setTimeout(()=>document.getElementById("receiptView").classList.add("hidden"),500)}
+function printReceipt(){printGeneric(false)}function printKitchen(){printGeneric(true)}
+function exportCSV(){let rows=[["Order #","Date","Customer","Phone","Address","Type","Items","Subtotal","Delivery Fee","Discount","Total","Payment","Notes"]];saved.forEach(o=>rows.push([o.id,o.dateTime,o.customer,o.phone,o.address,o.orderType,o.cart.map(x=>`${x.qty}x ${x.name}`).join(" | "),o.subtotal,o.deliveryFee,o.discount,o.total,o.payment,(o.notes||"").replace(/\n/g," ")]));let csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="boujee-boil-accounting-export.csv";a.click()}
+function clearHistory(){if(confirm("Delete all saved orders from this browser?")){saved=[];localStorage.removeItem("boujeeBoilOrders");renderHistory();renderDashboard()}}
+Object.keys(menu).forEach(t=>renderMenu(t,t));setDefaultDate();renderSummary();renderHistory();renderDashboard();deliveryFee.addEventListener("input",updateTotals);discount.addEventListener("input",updateTotals);
+</script>
+</body>
+</html>
