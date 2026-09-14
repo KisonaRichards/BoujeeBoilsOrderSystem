@@ -9,7 +9,7 @@
 *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--ink)}
 header{background:#231f20;color:white;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;gap:20px}
 .brand h1{margin:0;font-size:25px;letter-spacing:.08em}.brand p{margin:4px 0 0;color:#d9c9d0;font-size:12px}
-nav{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}.navbtn{background:#3a3435;color:white}.navbtn.active,.primary{background:var(--accent);color:#fff}.secondary{background:#eee5e1;color:var(--ink)}
+nav{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:99px;padding:10px 14px;font-weight:700;cursor:pointer}.navbtn{background:#3a3435;color:white}.navbtn.active,.primary{background:var(--accent);color:#fff}.secondary{background:#eee5e1;color:var(--ink)}
 main{max-width:1400px;margin:25px auto;padding:0 18px}.grid{display:grid;grid-template-columns:1.35fr .8fr;gap:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:0 5px 18px #2b1d2510}
 h2{margin:0 0 16px;font-size:19px}.section{margin-top:20px}.section:first-child{margin-top:0}
 label{display:block;font-size:12px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
@@ -26,7 +26,7 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 .receipt{max-width:420px;margin:auto;background:#fff;padding:25px;font-family:Arial,sans-serif}.receipt h1{text-align:center;font-size:20px;letter-spacing:.1em;margin:8px 0 4px}.receipt .center{text-align:center}.receipt hr{border:0;border-top:1px dashed #555;margin:15px 0}.rline{display:flex;justify-content:space-between;gap:15px;margin:7px 0}.receipt .grand{font-size:21px;font-weight:800}
 .receipt-logo{display:block;margin:0 auto 6px;width:70px;height:auto;object-fit:contain}
 .dashboard{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px}.stat b{display:block;font-size:20px;margin-top:4px}
-.filter-container{margin-bottom:20px;max-width:320px}
+.filter-container{margin-bottom:20px;max-width:360px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.dashboard{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.formgrid,.formgrid.three,.menu-grid{grid-template-columns:1fr}.history-item{grid-template-columns:1fr}}
 @media print{body{background:#fff}.no-print,header,main>*:not(#receiptView){display:none!important}#receiptView{display:block!important}.receipt{box-shadow:none;border:0;width:80mm;max-width:80mm;padding:5mm}}
 </style>
@@ -98,7 +98,7 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 
 <section id="dashboard" class="hidden">
 <div class="filter-container">
-  <label>Filter Sales by Week</label>
+  <label>Filter Sales by Week (Starting Aug 17)</label>
   <select id="weekFilter" onchange="renderDashboard()"></select>
 </div>
 <div class="dashboard">
@@ -199,7 +199,7 @@ function saveOrder(){
 }
 
 function resetOrder(){
- cart=[];currentOrderId=null;["customer","phone","address","notes"].forEach(id=>document.getElementById(id).value="");deliveryFee.value="";discount.value="";payment.value="Unpaid";setDefaultDate();Object.keys(menu).forEach(t=>menu[t].forEach((_,i)=>document.getElementById(t+i).textContent="0"));document.getElementById("orderBadge").textContent="NEW";renderSummary();
+ cart=[];currentOrderId=null;["customer","phone","address","notes"].forEach(id=>document.getElementById(id).value="");deliveryFee.value="";discount.value="";payment.value="Unpaid";setDefaultDate();Object.keys(menu).forEach(t=>renderMenu(t,t));document.getElementById("orderBadge").textContent="NEW";renderSummary();
 }
 
 function setDefaultDate(){dateTime.value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16)}
@@ -239,41 +239,45 @@ function renderHistory(){
  el.innerHTML=saved.map(o=>`<div class="history-item"><b>${o.id}</b><div><strong>${o.customer||"Walk-in"}</strong><div class="small">${new Date(o.dateTime||o.created).toLocaleString()} • ${o.orderType}</div></div><strong>${money(o.total)}</strong><div><button class="secondary" onclick="loadOrder('${o.id}')">Open</button></div></div>`).join("")
 }
 
-function getStartOfWeek(d){
- const date = new Date(d);
- const day = date.getDay();
- const diff = date.getDate() - day;
- return new Date(date.setDate(diff));
-}
-
 function populateWeekFilter(){
  const select=document.getElementById("weekFilter");
  const previousVal=select.value;
  select.innerHTML="";
  
- let weeks = {};
+ // Base anchor set to August 17th of current year
+ const currentYear = new Date().getFullYear();
+ const baseStartDate = new Date(currentYear, 7, 17); // Month index 7 = August
+ baseStartDate.setHours(0,0,0,0);
+ 
+ // Determine the latest order date or today's date to decide how many weeks to project
+ let latestDate = new Date();
  saved.forEach(o=>{
    let d = new Date(o.dateTime||o.created);
-   let start = getStartOfWeek(d);
-   start.setHours(0,0,0,0);
-   let key = start.toISOString();
-   weeks[key] = start;
+   if(d > latestDate) latestDate = d;
  });
  
- let currentWeekStart = getStartOfWeek(new Date());
- currentWeekStart.setHours(0,0,0,0);
- weeks[currentWeekStart.toISOString()] = currentWeekStart;
+ let weekOptions = [];
+ let cursor = new Date(baseStartDate);
  
- let sortedKeys = Object.keys(weeks).sort((a,b)=>new Date(b)-new Date(a));
- 
- sortedKeys.forEach(k=>{
-   let start = new Date(k);
+ while(cursor <= latestDate || weekOptions.length === 0){
+   let start = new Date(cursor);
    let end = new Date(start);
    end.setDate(end.getDate()+6);
+   
    let label = `Week of ${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} - ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+   weekOptions.push({
+     value: start.toISOString(),
+     label: label
+   });
+   
+   cursor.setDate(cursor.getDate()+7);
+ }
+ 
+ // Show newest weeks first
+ weekOptions.reverse().forEach(optData=>{
    let opt = document.createElement("option");
-   opt.value = k;
-   opt.textContent = label;
+   opt.value = optData.value;
+   opt.textContent = optData.label;
    select.appendChild(opt);
  });
  
