@@ -17,8 +17,7 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 .formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.formgrid.three{grid-template-columns:repeat(3,1fr)}
 .menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.menu-item{border:1px solid var(--line);border-radius:11px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:center}.menu-item strong{display:block}.small{font-size:12px;color:var(--muted)}
 .qty{display:flex;align-items:center;gap:7px}.qty button{width:31px;height:31px;padding:0;background:#eee5e1}.qty span{min-width:20px;text-align:center;font-weight:800}
-.addon-row{display:grid;grid-template-columns:1fr 90px;gap:10px;margin-bottom:8px}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
-.order-line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);gap:10px}.order-line:last-child{border-bottom:0}.remove{background:none;color:#a33;padding:2px 5px}
+.order-line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);gap:10px}.order-line:last-child{border-bottom:0}
 .total{border-top:2px solid var(--ink);margin-top:12px;padding-top:12px;font-size:18px}.total div{display:flex;justify-content:space-between;margin:6px 0}.grand{font-size:24px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.actions button{flex:1}
 .badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#f0e1e8;color:var(--accent);font-size:11px;font-weight:800}
@@ -26,7 +25,8 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 .history-card{margin-top:20px}.history-item{display:grid;grid-template-columns:90px 1fr 120px 100px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .receipt{max-width:420px;margin:auto;background:#fff;padding:25px;font-family:Arial,sans-serif}.receipt h1{text-align:center;font-size:20px;letter-spacing:.1em;margin:8px 0 4px}.receipt .center{text-align:center}.receipt hr{border:0;border-top:1px dashed #555;margin:15px 0}.rline{display:flex;justify-content:space-between;gap:15px;margin:7px 0}.receipt .grand{font-size:21px;font-weight:800}
 .receipt-logo{display:block;margin:0 auto 6px;width:70px;height:auto;object-fit:contain}
-.dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px}.stat b{display:block;font-size:23px;margin-top:4px}
+.dashboard{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px}.stat b{display:block;font-size:20px;margin-top:4px}
+.filter-container{margin-bottom:20px;max-width:320px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.dashboard{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.formgrid,.formgrid.three,.menu-grid{grid-template-columns:1fr}.history-item{grid-template-columns:1fr}}
 @media print{body{background:#fff}.no-print,header,main>*:not(#receiptView){display:none!important}#receiptView{display:block!important}.receipt{box-shadow:none;border:0;width:80mm;max-width:80mm;padding:5mm}}
 </style>
@@ -34,7 +34,12 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 <body>
 <header class="no-print">
   <div class="brand"><h1>BOUJEE BOIL</h1><p>Order Manager • Seafood • Sides • Sauce</p></div>
-  <nav><button class="navbtn active" onclick="showPage('order',this)">New Order</button><button class="navbtn" onclick="showPage('history',this)">Order History</button><button class="navbtn" onclick="showPage('dashboard',this)">Dashboard</button></nav>
+  <nav>
+    <button class="navbtn active" onclick="showPage('order',this)">New Order</button>
+    <button class="navbtn" onclick="showPage('upcoming',this)">Upcoming Orders</button>
+    <button class="navbtn" onclick="showPage('history',this)">Order History</button>
+    <button class="navbtn" onclick="showPage('dashboard',this)">Dashboard</button>
+  </nav>
 </header>
 
 <main>
@@ -51,7 +56,7 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 <div class="section"><label>Delivery address</label><input id="address" placeholder="Street name, unit, city, postal code"></div>
 
 <div class="section"><label>Seafood boils</label><div id="boils" class="menu-grid"></div></div>
-<div class="section"><label>Sauce</label><div id="sauces" class="menu-grid"></div></div>
+<div class="section"><label>Sauce (1st Free, +$5 for additional)</label><div id="sauces" class="menu-grid"></div></div>
 <div class="section"><label>Add-ons</label><div id="addons" class="menu-grid"></div></div>
 <div class="section"><label>Sides</label><div id="sides" class="menu-grid"></div></div>
 
@@ -76,18 +81,34 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 </div>
 </section>
 
+<section id="upcoming" class="hidden">
+<div class="card history-card">
+<h2>Upcoming Pre-Orders</h2>
+<div id="upcomingList"></div>
+</div>
+</section>
+
 <section id="history" class="hidden">
-<div class="card history-card"><h2>Order History</h2><div class="actions"><button class="secondary" onclick="exportCSV()">Export Accounting CSV</button><button class="secondary" onclick="clearHistory()">Clear Saved Orders</button></div><div id="historyList"></div></div>
+<div class="card history-card">
+<h2>All Order History</h2>
+<div class="actions"><button class="secondary" onclick="exportCSV()">Export Accounting CSV</button><button class="secondary" onclick="clearHistory()">Clear Saved Orders</button></div>
+<div id="historyList"></div>
+</div>
 </section>
 
 <section id="dashboard" class="hidden">
+<div class="filter-container">
+  <label>Filter Sales by Week</label>
+  <select id="weekFilter" onchange="renderDashboard()"></select>
+</div>
 <div class="dashboard">
 <div class="stat"><span class="small">Orders</span><b id="statOrders">0</b></div>
-<div class="stat"><span class="small">Sales</span><b id="statSales">$0.00</b></div>
-<div class="stat"><span class="small">Pickup</span><b id="statPickup">0</b></div>
-<div class="stat"><span class="small">Delivery</span><b id="statDelivery">0</b></div>
+<div class="stat"><span class="small">Total Sales</span><b id="statSales">$0.00</b></div>
+<div class="stat"><span class="small">Delivery Fees</span><b id="statDeliveryFees">$0.00</b></div>
+<div class="stat"><span class="small">Discounts</span><b id="statDiscounts">$0.00</b></div>
+<div class="stat"><span class="small">Net Revenue</span><b id="statNet">$0.00</b></div>
 </div>
-<div class="card"><h2>Recent Orders</h2><div id="dashboardList"></div></div>
+<div class="card"><h2>Filtered Week Orders</h2><div id="dashboardList"></div></div>
 </section>
 
 <section id="receiptView" class="hidden"></section>
@@ -102,63 +123,209 @@ boils:[
 {name:"Feast for Two",price:110,desc:"2 crab clusters • 20 shrimp • 2 corn • mini potatoes • sausage"},
 {name:"Family Pack",price:220,desc:"4 crab clusters • 40 shrimp • 4 corn • mini potatoes • sausage"}],
 sauces:[{name:"Cajun Butter",price:0},{name:"Garlic Butter",price:0},{name:"Spicy Cajun Glaze",price:0}],
-addons:[{name:"Shrimp (12–15 pcs)",price:17},{name:"Crab Legs (2–3 clusters)",price:35},{name:"Lobster Tail",price:26},{name:"King Crab",price:100}],
+addons:[{name:"Shrimp (12–15 pcs)",price:17},{name:"Crab Legs (2–3 clusters)",price:35},{name:"Lobster Tail",price:26},{name:"King Crab",price:100},{name:"Crab Cracker Set",price:16}],
 sides:[{name:"Seafood Pasta",price:26.50},{name:"Smoked Veggies",price:16},{name:"Basmati Rice",price:10}]
 };
 let cart=[]; let saved=JSON.parse(localStorage.getItem("boujeeBoilOrders")||"[]"); let currentOrderId=null;
 const money=n=>"$"+Number(n||0).toFixed(2);
+
 function renderMenu(id,type){
  const el=document.getElementById(id); el.innerHTML="";
  menu[type].forEach((x,i)=>{
   const d=document.createElement("div");d.className="menu-item";
-  d.innerHTML=`<div><strong>${x.name}</strong><span class="small">${x.desc||""}</span><div class="small">${x.price?money(x.price):"Included"}</div></div><div class="qty"><button onclick="changeQty('${type}',${i},-1)">−</button><span id="${type}${i}">0</span><button onclick="changeQty('${type}',${i},1)">+</button></div>`;
+  d.innerHTML=`<div><strong>${x.name}</strong><span class="small">${x.desc||""}</span><div class="small">${type==='sauces'?'1st Free / +$5 extra':(x.price?money(x.price):"Included")}</div></div><div class="qty"><button onclick="changeQty('${type}',${i},-1)">−</button><span id="${type}${i}">0</span><button onclick="changeQty('${type}',${i},1)">+</button></div>`;
   el.appendChild(d);
  });
 }
+
 function changeQty(type,i,delta){
  const item=menu[type][i], key=type+"-"+i;
  let found=cart.find(x=>x.key===key);
  if(!found && delta>0){found={key,type,i,name:item.name,price:item.price,qty:1};cart.push(found)}
  else if(found){found.qty=Math.max(0,found.qty+delta);if(found.qty===0)cart=cart.filter(x=>x!==found)}
+ recalculateSaucePricing();
  document.getElementById(type+i).textContent=found?found.qty:0; renderSummary();
 }
+
+function recalculateSaucePricing(){
+ const sauceItems=cart.filter(x=>x.type==="sauces");
+ let totalSauceQty=sauceItems.reduce((sum,x)=>sum+x.qty,0);
+ if(totalSauceQty===0) return;
+ 
+ let chargedSauces=Math.max(0, totalSauceQty - 1);
+ sauceItems.forEach(x=>{
+   if(chargedSauces>0){
+     let chargeQty = Math.min(x.qty, chargedSauces);
+     x.calculatedTotal = chargeQty * 5;
+     chargedSauces -= chargeQty;
+   } else {
+     x.calculatedTotal = 0;
+   }
+ });
+}
+
 function renderSummary(){
  const el=document.getElementById("orderSummary"); if(!cart.length){el.className="empty";el.innerHTML="Choose items from the menu.";updateTotals();return}
- el.className="";el.innerHTML=cart.map(x=>`<div class="order-line"><div><b>${x.qty} × ${x.name}</b><div class="small">${money(x.price)} each</div></div><div>${money(x.price*x.qty)}</div></div>`).join("");
+ el.className="";
+ el.innerHTML=cart.map(x=>{
+   let displayPrice = (x.type==='sauces') ? money(x.calculatedTotal||0) : money(x.price*x.qty);
+   return `<div class="order-line"><div><b>${x.qty} × ${x.name}</b></div><div>${displayPrice}</div></div>`;
+ }).join("");
  updateTotals();
 }
+
+function calculateCartSubtotal(){
+ return cart.reduce((a,x)=>{
+   if(x.type==='sauces') return a + (x.calculatedTotal||0);
+   return a + (x.price*x.qty);
+ },0);
+}
+
 function updateTotals(){
- const sub=cart.reduce((a,x)=>a+x.price*x.qty,0),fee=+document.getElementById("deliveryFee").value||0,disc=+document.getElementById("discount").value||0,total=Math.max(0,sub+fee-disc);
+ const sub=calculateCartSubtotal(),fee=+document.getElementById("deliveryFee").value||0,disc=+document.getElementById("discount").value||0,total=Math.max(0,sub+fee-disc);
  document.getElementById("subtotal").textContent=money(sub);document.getElementById("feeDisplay").textContent=money(fee);document.getElementById("discountDisplay").textContent="-"+money(disc);document.getElementById("total").textContent=money(total);
 }
+
 function orderData(){
- const sub=cart.reduce((a,x)=>a+x.price*x.qty,0),fee=+deliveryFee.value||0,disc=+discount.value||0;
+ const sub=calculateCartSubtotal(),fee=+deliveryFee.value||0,disc=+discount.value||0;
  return {id:currentOrderId||("BB-"+Date.now().toString().slice(-6)),customer:customer.value,phone:phone.value,address:address.value,orderType:orderType.value,dateTime:dateTime.value,cart:JSON.parse(JSON.stringify(cart)),deliveryFee:fee,discount:disc,payment:payment.value,notes:notes.value,subtotal:sub,total:Math.max(0,sub+fee-disc),status:"New",created:new Date().toISOString()};
 }
+
 function saveOrder(){
  if(!cart.length){alert("Add at least one item first.");return}
  const o=orderData(); currentOrderId=o.id;
  const idx=saved.findIndex(x=>x.id===o.id); if(idx>=0)saved[idx]=o;else saved.unshift(o);
- localStorage.setItem("boujeeBoilOrders",JSON.stringify(saved)); document.getElementById("orderBadge").textContent=o.id; renderHistory(); renderDashboard(); alert("Order "+o.id+" saved.");
+ localStorage.setItem("boujeeBoilOrders",JSON.stringify(saved)); document.getElementById("orderBadge").textContent=o.id; renderUpcoming(); renderHistory(); populateWeekFilter(); renderDashboard(); alert("Order "+o.id+" saved.");
 }
+
 function resetOrder(){
  cart=[];currentOrderId=null;["customer","phone","address","notes"].forEach(id=>document.getElementById(id).value="");deliveryFee.value="";discount.value="";payment.value="Unpaid";setDefaultDate();Object.keys(menu).forEach(t=>menu[t].forEach((_,i)=>document.getElementById(t+i).textContent="0"));document.getElementById("orderBadge").textContent="NEW";renderSummary();
 }
+
 function setDefaultDate(){dateTime.value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16)}
-function showPage(page,btn){document.querySelectorAll("main>section").forEach(x=>x.classList.add("hidden"));document.getElementById(page).classList.remove("hidden");document.querySelectorAll(".navbtn").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(page==="history")renderHistory();if(page==="dashboard")renderDashboard()}
-function loadOrder(id){const o=saved.find(x=>x.id===id);if(!o)return;resetOrder();currentOrderId=o.id;customer.value=o.customer;phone.value=o.phone;address.value=o.address||"";orderType.value=o.orderType;dateTime.value=o.dateTime;deliveryFee.value=o.deliveryFee;discount.value=o.discount;payment.value=o.payment;notes.value=o.notes;cart=o.cart;cart.forEach(x=>{document.getElementById(x.type+x.i).textContent=x.qty});document.getElementById("orderBadge").textContent=o.id;renderSummary();showPage("order",document.querySelector(".navbtn"))}
-function renderHistory(){const el=document.getElementById("historyList");if(!saved.length){el.innerHTML='<div class="empty">No saved orders yet.</div>';return}el.innerHTML=saved.map(o=>`<div class="history-item"><b>${o.id}</b><div><strong>${o.customer||"Walk-in"}</strong><div class="small">${new Date(o.dateTime||o.created).toLocaleString()} • ${o.orderType}</div></div><strong>${money(o.total)}</strong><div><button class="secondary" onclick="loadOrder('${o.id}')">Open</button></div></div>`).join("")}
-function renderDashboard(){const today=new Date().toISOString().slice(0,10),orders=saved.filter(o=>(o.dateTime||o.created).slice(0,10)===today);statOrders.textContent=orders.length;statSales.textContent=money(orders.reduce((a,o)=>a+o.total,0));statPickup.textContent=orders.filter(o=>o.orderType==="Pickup").length;statDelivery.textContent=orders.filter(o=>o.orderType==="Delivery").length;dashboardList.innerHTML=orders.length?orders.map(o=>`<div class="order-line"><span><b>${o.id}</b> — ${o.customer||"Walk-in"}</span><b>${money(o.total)}</b></div>`).join(""):'<div class="empty">No orders today.</div>'}
+
+function showPage(page,btn){
+ document.querySelectorAll("main>section").forEach(x=>x.classList.add("hidden"));
+ document.getElementById(page).classList.remove("hidden");
+ document.querySelectorAll(".navbtn").forEach(x=>x.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ if(page==="upcoming")renderUpcoming();
+ if(page==="history")renderHistory();
+ if(page==="dashboard"){populateWeekFilter();renderDashboard();}
+}
+
+function loadOrder(id){
+ const o=saved.find(x=>x.id===id);if(!o)return;
+ resetOrder();currentOrderId=o.id;customer.value=o.customer;phone.value=o.phone;address.value=o.address||"";orderType.value=o.orderType;dateTime.value=o.dateTime;deliveryFee.value=o.deliveryFee;discount.value=o.discount;payment.value=o.payment;notes.value=o.notes;cart=o.cart;
+ cart.forEach(x=>{
+   const el=document.getElementById(x.type+x.i);
+   if(el) el.textContent=x.qty;
+ });
+ recalculateSaucePricing();
+ document.getElementById("orderBadge").textContent=o.id;renderSummary();showPage('order',document.querySelector(".navbtn"))
+}
+
+function renderUpcoming(){
+ const el=document.getElementById("upcomingList");
+ const now=new Date();
+ const upcoming=saved.filter(o=>new Date(o.dateTime||o.created)>now);
+ if(!upcoming.length){el.innerHTML='<div class="empty">No upcoming pre-orders found.</div>';return}
+ el.innerHTML=upcoming.map(o=>`<div class="history-item"><b>${o.id}</b><div><strong>${o.customer||"Walk-in"}</strong><div class="small"><b>Pre-Order For:</b> ${new Date(o.dateTime).toLocaleString()} • ${o.orderType}</div></div><strong>${money(o.total)}</strong><div><button class="secondary" onclick="loadOrder('${o.id}')">Open</button></div></div>`).join("")
+}
+
+function renderHistory(){
+ const el=document.getElementById("historyList");
+ if(!saved.length){el.innerHTML='<div class="empty">No saved orders yet.</div>';return}
+ el.innerHTML=saved.map(o=>`<div class="history-item"><b>${o.id}</b><div><strong>${o.customer||"Walk-in"}</strong><div class="small">${new Date(o.dateTime||o.created).toLocaleString()} • ${o.orderType}</div></div><strong>${money(o.total)}</strong><div><button class="secondary" onclick="loadOrder('${o.id}')">Open</button></div></div>`).join("")
+}
+
+function getStartOfWeek(d){
+ const date = new Date(d);
+ const day = date.getDay();
+ const diff = date.getDate() - day;
+ return new Date(date.setDate(diff));
+}
+
+function populateWeekFilter(){
+ const select=document.getElementById("weekFilter");
+ const previousVal=select.value;
+ select.innerHTML="";
+ 
+ let weeks = {};
+ saved.forEach(o=>{
+   let d = new Date(o.dateTime||o.created);
+   let start = getStartOfWeek(d);
+   start.setHours(0,0,0,0);
+   let key = start.toISOString();
+   weeks[key] = start;
+ });
+ 
+ let currentWeekStart = getStartOfWeek(new Date());
+ currentWeekStart.setHours(0,0,0,0);
+ weeks[currentWeekStart.toISOString()] = currentWeekStart;
+ 
+ let sortedKeys = Object.keys(weeks).sort((a,b)=>new Date(b)-new Date(a));
+ 
+ sortedKeys.forEach(k=>{
+   let start = new Date(k);
+   let end = new Date(start);
+   end.setDate(end.getDate()+6);
+   let label = `Week of ${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} - ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+   let opt = document.createElement("option");
+   opt.value = k;
+   opt.textContent = label;
+   select.appendChild(opt);
+ });
+ 
+ if(previousVal && select.querySelector(`option[value="${previousVal}"]`)){
+   select.value = previousVal;
+ }
+}
+
+function renderDashboard(){
+ const selectVal=document.getElementById("weekFilter").value;
+ if(!selectVal) return;
+ 
+ const weekStart = new Date(selectVal);
+ const weekEnd = new Date(weekStart);
+ weekEnd.setDate(weekEnd.getDate()+7);
+ 
+ const filteredOrders = saved.filter(o=>{
+   let d = new Date(o.dateTime||o.created);
+   return d >= weekStart && d < weekEnd;
+ });
+ 
+ const totalSales = filteredOrders.reduce((a,o)=>a+o.subtotal,0);
+ const totalFees = filteredOrders.reduce((a,o)=>a+o.deliveryFee,0);
+ const totalDiscounts = filteredOrders.reduce((a,o)=>a+o.discount,0);
+ const netRevenue = filteredOrders.reduce((a,o)=>a+o.total,0);
+ 
+ document.getElementById("statOrders").textContent = filteredOrders.length;
+ document.getElementById("statSales").textContent = money(totalSales);
+ document.getElementById("statDeliveryFees").textContent = money(totalFees);
+ document.getElementById("statDiscounts").textContent = money(totalDiscounts);
+ document.getElementById("statNet").textContent = money(netRevenue);
+ 
+ const el = document.getElementById("dashboardList");
+ el.innerHTML = filteredOrders.length ? filteredOrders.map(o=>`<div class="order-line"><span><b>${o.id}</b> — ${o.customer||"Walk-in"} (${new Date(o.dateTime||o.created).toLocaleDateString()})</span><b>${money(o.total)}</b></div>`).join("") : '<div class="empty">No sales for this selected week.</div>';
+}
+
 function receiptHTML(o,kitchen=false){
- const items=o.cart.map(x=>`<div class="rline"><span>${x.qty} × ${x.name}</span><span>${money(x.qty*x.price)}</span></div>`).join("");
+ const items=o.cart.map(x=>{
+   let linePrice = (x.type==='sauces') ? money(x.calculatedTotal||0) : money(x.qty*x.price);
+   return `<div class="rline"><span>${x.qty} × ${x.name}</span><span>${linePrice}</span></div>`;
+ }).join("");
  if(kitchen)return `<div class="receipt"><h1>BOUJEE BOIL</h1><div class="center"><b>KITCHEN TICKET</b><br>${o.id}<br>${o.customer||"Walk-in"}<br>${o.phone||""}<br><b>DELIVERY ADDRESS:</b><br>${o.address||"N/A"}<br><br>${o.orderType} • ${o.dateTime?new Date(o.dateTime).toLocaleString():""}</div><hr>${o.cart.map(x=>`<div style="margin:10px 0"><b>${x.qty} × ${x.name}</b></div>`).join("")}<hr><b>PAYMENT: ${o.payment}</b><br><br><b>NOTES</b><div style="white-space:pre-wrap">${o.notes||"None"}</div></div>`;
  return `<div class="receipt"><img class="receipt-logo" src="` + logoBase64 + `" alt="Logo"><h1>BOUJEE BOIL</h1><div class="center">Get into it… buttery, seasoned, messy in the best way<br><br><b>ORDER ${o.id}</b><br>${o.customer||"Walk-in"}<br>${o.orderType} • ${o.dateTime?new Date(o.dateTime).toLocaleString():""}</div><hr>${items}<hr><div class="rline"><span>Subtotal</span><span>${money(o.subtotal)}</span></div><div class="rline"><span>Delivery / other</span><span>${money(o.deliveryFee)}</span></div><div class="rline"><span>Discount</span><span>-${money(o.discount)}</span></div><div class="rline grand"><span>TOTAL</span><span>${money(o.total)}</span></div><div class="center"><br>Payment: ${o.payment}<br><br>Thank you for ordering Boujee Boil!<br>❤️</div></div>`;
 }
+
 function printGeneric(kitchen=false){let o=orderData();if(!cart.length){alert("Add at least one item first.");return}document.getElementById("receiptView").innerHTML=receiptHTML(o,kitchen);document.getElementById("receiptView").classList.remove("hidden");window.print();setTimeout(()=>document.getElementById("receiptView").classList.add("hidden"),500)}
 function printReceipt(){printGeneric(false)}function printKitchen(){printGeneric(true)}
 function exportCSV(){let rows=[["Order #","Date","Customer","Phone","Address","Type","Items","Subtotal","Delivery Fee","Discount","Total","Payment","Notes"]];saved.forEach(o=>rows.push([o.id,o.dateTime,o.customer,o.phone,o.address,o.orderType,o.cart.map(x=>`${x.qty}x ${x.name}`).join(" | "),o.subtotal,o.deliveryFee,o.discount,o.total,o.payment,(o.notes||"").replace(/\n/g," ")]));let csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="boujee-boil-accounting-export.csv";a.click()}
-function clearHistory(){if(confirm("Delete all saved orders from this browser?")){saved=[];localStorage.removeItem("boujeeBoilOrders");renderHistory();renderDashboard()}}
-Object.keys(menu).forEach(t=>renderMenu(t,t));setDefaultDate();renderSummary();renderHistory();renderDashboard();deliveryFee.addEventListener("input",updateTotals);discount.addEventListener("input",updateTotals);
+function clearHistory(){if(confirm("Delete all saved orders from this browser?")){saved=[];localStorage.removeItem("boujeeBoilOrders");renderUpcoming();renderHistory();populateWeekFilter();renderDashboard()}}
+
+Object.keys(menu).forEach(t=>renderMenu(t,t));setDefaultDate();renderSummary();renderUpcoming();renderHistory();populateWeekFilter();renderDashboard();
+deliveryFee.addEventListener("input",updateTotals);discount.addEventListener("input",updateTotals);
 </script>
 </body>
 </html>
